@@ -7,7 +7,6 @@ SAVE_FILE = "savegame.json"
 class DataManager:
     @staticmethod
     def save_game(player, current_location_name, time_hour):
-        """将游戏数据保存到文件"""
         data = {
             "player": {
                 "name": player.name,
@@ -17,7 +16,8 @@ class DataManager:
                 "inventory": player.inventory,
                 "companions": player.companions,
                 "xp": player.xp,
-                "level": player.level
+                "level": player.level,
+                "caps": player.caps # [新增] 保存瓶盖
             },
             "game": {
                 "location": current_location_name,
@@ -34,7 +34,6 @@ class DataManager:
 
     @staticmethod
     def load_game():
-        """读取存档"""
         if not os.path.exists(SAVE_FILE):
             return None
         try:
