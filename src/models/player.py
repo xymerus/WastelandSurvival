@@ -14,12 +14,26 @@ class Player:
         self.xp = 0
         self.level = 1
         self.xp_to_next_level = 100
-        
-        # [新增] 初始资金 50 瓶盖
         self.caps = 50 
+        
+        # [新增] 任务列表
+        self.active_quests = [] 
 
+    # [新增] 检查并更新任务进度
+    def check_quests(self, event_type):
+        """
+        event_type: 例如 "kill_zombie"
+        返回: 完成的任务列表
+        """
+        completed = []
+        for q in self.active_quests:
+            if not q.is_completed and q.target_type == event_type:
+                if q.update_progress(1):
+                    completed.append(q)
+        return completed
+
+    # (保留原有的 change_caps, gain_xp, get_attack_damage 等方法)
     def change_caps(self, amount):
-        """修改金钱 (正数加钱，负数扣钱)"""
         self.caps += amount
         if self.caps < 0: self.caps = 0
 
@@ -44,10 +58,8 @@ class Player:
         if "老兵" in self.companions: dmg += 15
         return dmg
 
-    # (保留其他原有方法: take_damage, move, search, get_item, remove_item, restore, _check_status)
-    def take_damage(self, amount):
-        self.hp -= amount
-        if self.hp <= 0: self.hp=0; self.is_alive=False
+    # (保留 take_damage, move, search, get_item, remove_item, restore, _check_status)
+    def take_damage(self, amount): self.hp -= amount; self.is_alive = False if self.hp <= 0 else True
     def move(self): self.hunger -= config.HUNGER_COST_MOVE; self._check_status()
     def search(self): self.hunger -= config.HUNGER_COST_SEARCH; self._check_status()
     def get_item(self, item): self.inventory.append(item)
