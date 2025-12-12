@@ -51,6 +51,9 @@ class Player:
 
     def get_attack_damage(self):
         dmg = self.base_damage + (self.level * 2)
+        # [新增] 动力臂加成
+        if "动力臂" in self.inventory:
+            dmg += 30 # 非常强力
         if "霰弹枪" in self.inventory: dmg += 45
         elif "警用手枪" in self.inventory: dmg += 20
         elif "生锈铁管" in self.inventory: dmg += 5

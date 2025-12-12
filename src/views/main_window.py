@@ -7,8 +7,8 @@ class MainWindow:
     def __init__(self, game_manager):
         self.gm = game_manager
         self.root = tk.Tk()
-        self.root.title(">>> 废土行者 v2.2 (英雄之路) <<<")
-        self.root.geometry("1100x768") # 稍微宽一点
+        self.root.title(">>> 废土行者 v2.3 (荒野版) <<<")
+        self.root.geometry("1150x800") # 窗口加大
         
         self.colors = {
             "bg": "#050505", "panel": "#101010", "text": "#cccccc",
@@ -22,7 +22,6 @@ class MainWindow:
         self.style.theme_use('clam')
         self.style.configure("red.Horizontal.TProgressbar", foreground='red', background='#d10000', troughcolor='#220000', borderwidth=0)
         self.style.configure("green.Horizontal.TProgressbar", foreground='green', background='#00d100', troughcolor='#002200', borderwidth=0)
-        # Tab 样式
         self.style.configure("TNotebook", background=self.colors["bg"], borderwidth=0)
         self.style.configure("TNotebook.Tab", background="#333", foreground="white", padding=[10, 5])
         self.style.map("TNotebook.Tab", background=[("selected", "#555")], foreground=[("selected", self.colors["highlight"])])
@@ -31,7 +30,6 @@ class MainWindow:
         self._bind_global_keys()
         self.show_main_menu()
 
-    # (保留 _bind_global_keys, _on_enter, show_main_menu, show_death_screen)
     def _bind_global_keys(self): self.root.bind("<Return>", lambda e: self._on_enter())
     def _on_enter(self): 
         if hasattr(self, 'entry') and self.entry.winfo_exists():
@@ -55,7 +53,6 @@ class MainWindow:
         if self.gm.data_mgr.has_save_file(): tk.Button(self.current_frame, text="读档", command=self.gm.load_game, **btn).pack(pady=10)
         tk.Button(self.current_frame, text="主菜单", command=self.show_main_menu, **btn).pack(pady=10)
 
-    # === [修改] 游戏界面：右侧改为 Notebook ===
     def show_game_interface(self):
         self._clear_frame()
         self.current_frame = tk.Frame(self.root, bg=self.colors["bg"])
@@ -65,7 +62,6 @@ class MainWindow:
         main_pad = tk.Frame(self.current_frame, bg=self.colors["bg"])
         main_pad.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # 左侧面板 (HUD + 文本)
         left_panel = tk.Frame(main_pad, bg=self.colors["panel"])
         left_panel.pack(side="left", fill="both", expand=True)
         
@@ -83,58 +79,44 @@ class MainWindow:
         self.text_area.pack(fill="both", expand=True)
         self._setup_tags()
 
-        # === [核心修改] 右侧面板：Notebook ===
-        right_panel = tk.Frame(main_pad, bg=self.colors["panel"], width=320) # 稍微加宽
+        # 右侧面板变宽
+        right_panel = tk.Frame(main_pad, bg=self.colors["panel"], width=350) 
         right_panel.pack(side="right", fill="y", padx=(15,0))
         right_panel.pack_propagate(False)
 
-        # 创建选项卡
         self.tabs = ttk.Notebook(right_panel)
         self.tabs.pack(fill="both", expand=True)
 
-        # Tab 1: 控制台 (地图 + 按钮)
         self.tab_console = tk.Frame(self.tabs, bg=self.colors["panel"])
-        self.tabs.add(self.tab_console, text="控制")
+        self.tabs.add(self.tab_console, text="控制台")
         self._init_console_tab()
 
-        # Tab 2: 任务日志
         self.tab_quest = tk.Frame(self.tabs, bg=self.colors["panel"])
         self.tabs.add(self.tab_quest, text="任务")
         self.quest_text = tk.Text(self.tab_quest, bg="#111", fg="#aaa", font=("Consolas", 10), state="disabled", bd=0, padx=10, pady=10)
         self.quest_text.pack(fill="both", expand=True)
 
-        # 底部输入框 (全局)
         self.entry = tk.Entry(right_panel, bg="#333", fg="white", relief="flat")
         self.entry.pack(side="bottom", fill="x", padx=5, pady=5)
 
     def _init_console_tab(self):
-        # 地图区
-        tk.Label(self.tab_console, text="[ RADAR ]", bg=self.colors["panel"], fg="#666").pack(fill="x", pady=(10,0))
-        self.map_area = tk.Text(self.tab_console, bg=self.colors["map_bg"], fg="#33ff33", font=("Courier New", 12, "bold"), height=9, width=22, state="disabled", bd=0)
+        tk.Label(self.tab_console, text="[ WIDE AREA RADAR ]", bg=self.colors["panel"], fg="#666").pack(fill="x", pady=(10,0))
+        # 地图区域加宽加高
+        self.map_area = tk.Text(self.tab_console, bg=self.colors["map_bg"], fg="#33ff33", font=("Courier New", 11, "bold"), height=13, width=32, state="disabled", bd=0)
         self.map_area.pack(pady=5)
         self.time_label = tk.Label(self.tab_console, text="--:--", bg=self.colors["panel"], fg="yellow", font=("Consolas", 16, "bold"))
         self.time_label.pack()
-        
-        # 按钮容器
         self.control_panel = tk.Frame(self.tab_console, bg=self.colors["panel"])
         self.control_panel.pack(fill="both", expand=True, padx=5, pady=5)
 
-    # === [新增] 更新任务列表显示 ===
     def update_quest_log(self, quests):
         if not hasattr(self, 'quest_text'): return
-        self.quest_text.config(state="normal")
-        self.quest_text.delete(1.0, tk.END)
-        
-        if not quests:
-            self.quest_text.insert(tk.END, "当前没有活跃任务。\n请寻找 NPC 接取任务。")
+        self.quest_text.config(state="normal"); self.quest_text.delete(1.0, tk.END)
+        if not quests: self.quest_text.insert(tk.END, "当前没有活跃任务。\n")
         else:
-            for q in quests:
-                color = "green" if q.is_completed else "white"
-                self.quest_text.insert(tk.END, q.get_status_str() + "\n")
-        
+            for q in quests: self.quest_text.insert(tk.END, q.get_status_str() + "\n")
         self.quest_text.config(state="disabled")
 
-    # (保留原有 UI 更新方法)
     def update_stats(self, player, time_str):
         if hasattr(self, 'hp_bar'):
             self.hp_bar['value'] = (player.hp / player.max_hp) * 100
@@ -142,11 +124,8 @@ class MainWindow:
             self.lvl_label.config(text=f"Lv.{player.level}")
             self.caps_label.config(text=f"$ {player.caps}")
             self.time_label.config(text=time_str)
-            # 顺便更新任务
             self.update_quest_log(player.active_quests)
 
-    # (保留其他方法: _clear_frame, _bind_game_keys, switch_mode, open_inventory, open_shop_window, _setup_tags, append_text...)
-    # 务必保留 v2.1 的这些实现，这里简写
     def _clear_frame(self): 
         if self.current_frame: self.current_frame.destroy()
     def _bind_game_keys(self):
@@ -163,14 +142,12 @@ class MainWindow:
         elif mode == "dialogue": self._setup_dialogue_ui(options)
     
     def _setup_exploration_ui(self):
-        # 简化版布局，适应新宽度
         gf = tk.Frame(self.control_panel, bg="#101010"); gf.pack(pady=5)
         cfg = {"width": 3, "bg": "#333", "fg": "white"}
         tk.Button(gf, text="N", command=lambda: self.gm.handle_input("go north"), **cfg).grid(row=0,column=1)
         tk.Button(gf, text="W", command=lambda: self.gm.handle_input("go west"), **cfg).grid(row=1,column=0)
         tk.Button(gf, text="E", command=lambda: self.gm.handle_input("go east"), **cfg).grid(row=1,column=2)
         tk.Button(gf, text="S", command=lambda: self.gm.handle_input("go south"), **cfg).grid(row=2,column=1)
-        
         tk.Button(self.control_panel, text="🔍 搜刮", bg="#d4af37", fg="black", command=lambda: self.gm.handle_input("search")).pack(fill="x", pady=2)
         tk.Button(self.control_panel, text="🎒 背包", bg="#4682b4", fg="white", command=self.open_inventory).pack(fill="x", pady=2)
         tk.Button(self.control_panel, text="💾 保存", bg="#444", fg="white", command=self.gm.save_game).pack(fill="x", pady=2)
@@ -189,7 +166,6 @@ class MainWindow:
         for i in self.gm.player.inventory: tk.Button(inv, text=i, bg="#444", fg="white", command=lambda n=i: [self.gm.try_use_item(n), inv.destroy()]).pack(fill="x", pady=1)
     
     def open_shop_window(self, shop_name, items):
-        # 复制 v2.1 的商店代码
         shop_win = tk.Toplevel(self.root); shop_win.geometry("400x500"); shop_win.configure(bg="#222")
         tk.Label(shop_win, text=shop_name, bg="#222", fg="gold", font=("Arial",14)).pack(pady=10)
         for n,p in items.items(): tk.Button(shop_win, text=f"{n} - ${p}", bg="#333", fg="white", command=lambda name=n,pr=p: self.gm.buy_item(name,pr)).pack(fill="x", padx=20, pady=2)
