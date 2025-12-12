@@ -1,0 +1,13 @@
+# Python 编译文件
+__pycache__/
+*.py[cod]
+
+# VS Code 配置文件 (个人设置不需要上传)
+.vscode/
+
+# 虚拟环境 (如果有的话)
+venv/
+env/
+
+# 存档文件 (通常存档只保存在本地)
+savegame.json
